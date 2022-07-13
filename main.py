@@ -3,7 +3,7 @@ import random
 from ursina import *
 from ursina.prefabs.first_person_controller import FirstPersonController
 from ursina.shaders import basic_lighting_shader
-
+from perlin_noise import PerlinNoise
 
 app = Ursina()
 
@@ -15,8 +15,7 @@ textura_cielo = load_texture('assets/cielo.jpg')
 textura_zombie = load_texture('assets/mobs/zombie/zombie.png')
 
 bloque = 1
-semilla = random.randrange(1,1000000000)
-semillafinal = str(semilla)
+
 
 def update():
     global bloque
@@ -60,22 +59,20 @@ class Cielo(Entity):
             scale = 250,
 			double_sided = True)
 
-zombiemodel = load_model('assets/mobs/zombie/zombie.fbx')
 
-zombie = Entity(
-    model=zombiemodel,
-    scale=0.1,
-    Double_size= True,
-    Texture= textura_zombie,
-)
+chunkSize = 20
 
-zombie.y = Voxel.y
+semilla = random.randrange(1,1000000000)
 
-chunkSize = 40
+noise = PerlinNoise(octaves=3, seed=semilla)
+amp = random.randrange(1,6)
+freq = random.randrange(1,20)
 
-for z in range(chunkSize):
-    for x in range(chunkSize):
-        voxel = Voxel(position=(x, 0, z))
+for z in range(chunkSize*chunkSize):
+    cube = Voxel(texture=textura_tierra)
+    cube.x = floor(z/chunkSize)
+    cube.z = floor(z%chunkSize)
+    cube.y = floor(noise([cube.x/freq, cube.z/freq])*amp)
 
 def input(key):
   if key == "escape":
@@ -83,6 +80,8 @@ def input(key):
 
 
 player = FirstPersonController()
+player.x = chunkSize/2
+player.z= chunkSize/2
 
 cielo = Cielo()
 
