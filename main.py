@@ -1,10 +1,8 @@
-import ursina.shader
-from ursina import *
+import random
 
+from ursina import *
 from ursina.prefabs.first_person_controller import FirstPersonController
 from ursina.shaders import basic_lighting_shader
-from perlin import *
-import random
 
 
 app = Ursina()
@@ -14,6 +12,7 @@ textura_piedra = load_texture('assets/piedra.jpg')
 textura_madera = load_texture('assets/madera.png')
 textura_lana = load_texture('assets/lana.png')
 textura_cielo = load_texture('assets/cielo.jpg')
+textura_zombie = load_texture('assets/mobs/zombie/zombie.png')
 
 bloque = 1
 semilla = random.randrange(1,1000000000)
@@ -60,6 +59,17 @@ class Cielo(Entity):
 			texture = textura_cielo,
             scale = 250,
 			double_sided = True)
+
+zombiemodel = load_model('assets/mobs/zombie/zombie.fbx')
+
+zombie = Entity(
+    model=zombiemodel,
+    scale=0.1,
+    Double_size= True,
+    Texture= textura_zombie,
+)
+
+zombie.y = Voxel.y
 
 chunkSize = 40
 
