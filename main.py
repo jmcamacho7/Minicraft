@@ -26,7 +26,6 @@ def update():
     if held_keys['4']: bloque = 4
     if held_keys['control']:
         player.speed = 7
-    getTerr()
 
 class Bedrock(Button):
     def __init__(self, position=(0,0,0), texture = textura_bedrock):
@@ -88,21 +87,25 @@ chunkSize = 25
 
 semilla = random.randrange(1,1000000000)
 
-noise = PerlinNoise(octaves=3, seed=semilla)
-amp = random.randrange(1,10)
-freq = random.randrange(1,30)
+noise = PerlinNoise(octaves=1, seed=semilla)
+amp = random.randrange(3,10)
+freq = random.randrange(3,30)
 
-shells=[]
 
-for z in range(chunkSize*chunkSize):
-    cube = Bedrock(texture=textura_bedrock)
-    shells.append(cube)
-    def getTerr():
-        global amp, freq
-        for i in range(len(shells)):
-            xx = shells[i].x = floor((i / chunkSize) + player.x - 0.5 * chunkSize)
-            zz = shells[i].z = floor((i % chunkSize) + player.z - 0.5 * chunkSize)
-            y = shells[i].y = floor(noise([xx / freq, zz / freq]) * amp)
+terreno = Entity(model=None, collider=None)
+
+for a in range(chunkSize*chunkSize):
+    bud = Entity(model='cube')
+    bud.x = floor(a/chunkSize)
+    bud.z = floor(a%chunkSize)
+    bud.y = floor((noise([bud.x/freq,bud.z/freq]))*amp)
+    bud.parent = terreno
+
+terreno.combine()
+terreno.collider = 'mesh'
+terreno.texture= textura_tierra
+
+window.show_ursina_splash=True
 
 def input(key):
   if key == "escape":
@@ -112,7 +115,10 @@ def input(key):
 player = FirstPersonController()
 player.x = chunkSize/2
 player.z= chunkSize/2
+player.gravity= 0.5
 
 cielo = Cielo()
+
+
 
 app.run()
