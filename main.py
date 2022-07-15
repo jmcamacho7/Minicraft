@@ -5,6 +5,7 @@ from ursina.prefabs.first_person_controller import FirstPersonController
 from ursina.shaders import basic_lighting_shader
 from perlin_noise import PerlinNoise
 from numpy import abs
+import time
 
 app = Ursina()
 
@@ -17,19 +18,19 @@ textura_bedrock = load_texture('assets/bedrock.png')
 textura_zombie = load_texture('assets/mobs/zombie/zombie.png')
 
 bloque = 1
-
+prevTime= time.time()
 
 def update():
-    global bloque, posicionxA, posicionzA
+    global bloque, posicionxA, posicionzA, prevTime
     if held_keys['1']: bloque = 1
     if held_keys['2']: bloque = 2
     if held_keys['3']: bloque = 3
     if held_keys['4']: bloque = 4
-    if held_keys['control']:
-        player.speed = 7
     if      abs(player.z - posicionzA) > 1 or \
             abs(player.x - posicionxA) > 1:
         generarShell()
+    if time.time() - prevTime > 0.4:
+        generarSubset()
 
 class Bedrock(Entity):
     def __init__(self, position=(0,0,0), texture = textura_bedrock):
@@ -78,9 +79,9 @@ class Voxel(Button):
 
 
 class Cielo(Entity):
-	def __init__(self):
-		super().__init__(
-			parent = scene,
+    def __init__(self):
+	    super().__init__(
+		    parent = scene,
 			model = 'sphere',
 			texture = textura_cielo,
             scale = 250,
@@ -89,21 +90,62 @@ class Cielo(Entity):
 
 chunkSize = 25
 
-semilla = random.randrange(1,1000000000)
+semilla = 280000
 
 noise = PerlinNoise(octaves=1, seed=semilla)
-amp = random.randrange(3,10)
-freq = random.randrange(3,30)
+amp = 64
+freq = 100
 
 
 terreno = Entity(model=None, collider=None)
-terrenowidth= 10
+terrenowidth= 100
 subwidth= terrenowidth
 subsets = []
 subCubo = []
 
+sci = 0
+subsetActual = 0
+
+
 for i in range(subwidth):
     bud = Entity(model='cube')
+    subCubo.append(bud)
+
+for i in range(int((terrenowidth*terrenowidth)/subwidth)):
+    bud = Entity(model=None)
+    bud.parent = terreno
+    subsets.append(bud)
+
+def generarSubset():
+    global sci, subsetActual, noise, freq, amp
+    if subsetActual >= len(subsets):
+        terminarTerreno()
+        return
+    for i in range(subwidth):
+        x = subCubo[i].x = floor((i + sci)/subwidth)
+        z = subCubo[i].z = floor((i + sci)%subwidth)
+        y = subCubo[i].y = floor((noise([x/freq,z/freq]))*amp)
+
+        subCubo[i].parent = subsets[subsetActual]
+        subCubo[i].visible = False
+
+
+    subsets[subsetActual].combine(auto_destroy=False)
+    subsets[subsetActual].texture = textura_tierra
+    sci += subwidth
+    subsetActual += 1
+
+terrenoAcabado = False
+
+def terminarTerreno():
+    global terrenoAcabado
+    if terrenoAcabado == True: return
+    application.pause()
+    terreno.combine()
+    player.y = 32
+    terreno.texture= textura_tierra
+    application.resume
+
 
 #for a in range(chunkSize*chunkSize):
     # bud = Entity(model='cube')
@@ -120,14 +162,13 @@ shell = []
 shellWidth = 20
 
 for i in range(shellWidth*shellWidth):
-    blok = Entity(model='cube',
+    bud = Entity(model='cube',
                   collider='box',
-                  texture=textura_tierra,
                   shader=basic_lighting_shader,
-                  highlight_color = color.gray,
                   )
+    bud.visible = False
 
-    shell.append(blok)
+    shell.append(bud)
 
 
 def generarShell():
@@ -141,11 +182,18 @@ def generarShell():
 window.show_ursina_splash=True
 
 def input(key):
-  if key == "escape":
-    quit()
 
-scene.fog_color = color.rgb(0,200,211)
-scene.fog_density = 0.02
+    if key == 'control':
+        player.speed = 7
+
+    if key == "escape":
+        quit()
+
+    if key == "g":
+        generarSubset()
+
+scene.fog_color = color.rgb(250,250,250)
+scene.fog_density = 0.01
 
 player = FirstPersonController()
 player.x = chunkSize/2
@@ -156,6 +204,7 @@ posicionxA= player.x
 
 cielo = Cielo()
 generarShell()
+
 
 
 
