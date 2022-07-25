@@ -137,9 +137,11 @@ def update():
 
 
     if abs(player.z - posicionzA) > 1 or \
-            abs(player.x - posicionxA) > 1:
+        abs(player.x - posicionxA) > 1:
+
             origen=player.position
             rad=0
+            theta=0
             generar = 1 * puedeGenerar
             posicionzA = player.z
             posicionxA = player.x
@@ -160,11 +162,10 @@ def update():
 
 
 
+semilla = random.choice(range(99,2000000))
+noise = PerlinNoise(octaves=1, seed=semilla)
 
-noise = PerlinNoise(octaves=1, seed=99)
-amp = 0
-freq = 0
-
+megasets = []
 generar = 1
 puedeGenerar = 1
 velocidadGen = 0
@@ -192,12 +193,13 @@ subsetActual = 0
 
 
 for x in range(numSubcubo):
-    bud = Entity(model='cube')
+    bud = Entity(model='cube', texture= textura_bedrock)
+    bud.rotation_y = random.randint(1,4)*90
     bud.disable()
     subCubo.append(bud)
 
 for x in range(numSubsets):
-    bud = Entity(model=None)
+    bud = Entity(model='cube')
     bud.texture = textura_bedrock
     bud.disable()
     subsets.append(bud)
@@ -228,7 +230,9 @@ def generarTerreno():
         subCubo[cuboActual].z = z
         subDic['x' + str(x) + 'z' + str(z)] = 'i'
         subCubo[cuboActual].parent = subsets[subsetActual]
-        subCubo[cuboActual].y = perlinGen(x, z)
+        y = subCubo[cuboActual].y = perlinGen(x, z)
+        g = nMap(y, -8, 21, 12, 243)
+        g += random.randint(-12,12)
         subCubo[cuboActual].disable()
         cuboActual += 1
 
@@ -238,10 +242,19 @@ def generarTerreno():
             subsetActual += 1
             cuboActual = 0
 
+            if subsetActual == numSubsets:
+                megasets.append(Entity(texture=textura_bedrock))
+                for x in subsets:
+                    x.parent = megasets[-1]
+                megasets[-1].combine(auto_destroy = False)
+
+                for x in subsets:
+                    x.parent = scene
+                subsetActual=0
+                print('Megaset #' +  str(len(megasets))+'!')
+
     else:
         pass
-        # There was terrain already there, so
-        # continue rotation to find new terrain spot.
 
     if rad > 0:
         theta += 45 / rad
@@ -259,6 +272,7 @@ shellWidth = 3
 for i in range(shellWidth*shellWidth):
     bud = Entity(model='cube',
                   collider='box',
+
                   )
     bud.visible = False
     shell.append(bud)
